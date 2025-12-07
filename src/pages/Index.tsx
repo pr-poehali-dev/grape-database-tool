@@ -16,13 +16,16 @@ interface Vineyard {
   type: 'открытый грунт' | 'теплица';
   x: number;
   y: number;
+  latitude: number;
+  longitude: number;
+  cat: number;
 }
 
 const Index = () => {
   const [vineyards, setVineyards] = useState<Vineyard[]>([
-    { id: 1, name: 'Виноградник Иванова', location: 'Самара', bushCount: 25, type: 'открытый грунт', x: 45, y: 55 },
-    { id: 2, name: 'Виноградник Петрова', location: 'Тольятти', bushCount: 40, type: 'теплица', x: 35, y: 48 },
-    { id: 3, name: 'Виноградник Сидорова', location: 'Сызрань', bushCount: 30, type: 'открытый грунт', x: 52, y: 62 }
+    { id: 1, name: 'Виноградник Иванова', location: 'Самара', bushCount: 25, type: 'открытый грунт', x: 45, y: 55, latitude: 53.195, longitude: 50.1002, cat: 2450 },
+    { id: 2, name: 'Виноградник Петрова', location: 'Тольятти', bushCount: 40, type: 'теплица', x: 35, y: 48, latitude: 53.5303, longitude: 49.3461, cat: 2520 },
+    { id: 3, name: 'Виноградник Сидорова', location: 'Сызрань', bushCount: 30, type: 'открытый грунт', x: 52, y: 62, latitude: 53.1585, longitude: 48.4681, cat: 2380 }
   ]);
 
   const [selectedVineyard, setSelectedVineyard] = useState<Vineyard | null>(null);
@@ -31,7 +34,10 @@ const Index = () => {
     name: '',
     location: '',
     bushCount: 0,
-    type: 'открытый грунт' as 'открытый грунт' | 'теплица'
+    type: 'открытый грунт' as 'открытый грунт' | 'теплица',
+    latitude: 0,
+    longitude: 0,
+    cat: 0
   });
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -50,7 +56,7 @@ const Index = () => {
 
     setVineyards([...vineyards, vineyard]);
     setIsAddingNew(false);
-    setNewVineyard({ name: '', location: '', bushCount: 0, type: 'открытый грунт' });
+    setNewVineyard({ name: '', location: '', bushCount: 0, type: 'открытый грунт', latitude: 0, longitude: 0, cat: 0 });
   };
 
   const totalBushes = vineyards.reduce((sum, v) => sum + v.bushCount, 0);
@@ -191,6 +197,40 @@ const Index = () => {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="latitude">Широта</Label>
+                          <Input
+                            id="latitude"
+                            type="number"
+                            step="0.0001"
+                            value={newVineyard.latitude}
+                            onChange={(e) => setNewVineyard({ ...newVineyard, latitude: parseFloat(e.target.value) || 0 })}
+                            placeholder="53.1950"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="longitude">Долгота</Label>
+                          <Input
+                            id="longitude"
+                            type="number"
+                            step="0.0001"
+                            value={newVineyard.longitude}
+                            onChange={(e) => setNewVineyard({ ...newVineyard, longitude: parseFloat(e.target.value) || 0 })}
+                            placeholder="50.1002"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="cat">САТ (сумма активных температур, °C)</Label>
+                        <Input
+                          id="cat"
+                          type="number"
+                          value={newVineyard.cat}
+                          onChange={(e) => setNewVineyard({ ...newVineyard, cat: parseInt(e.target.value) || 0 })}
+                          placeholder="2450"
+                        />
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Заполните форму, затем кликните на карту чтобы поставить метку
                       </p>
@@ -314,6 +354,23 @@ const Index = () => {
                     <Badge variant={selectedVineyard.type === 'теплица' ? 'default' : 'secondary'}>
                       {selectedVineyard.type}
                     </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Широта</p>
+                      <p className="font-semibold">{selectedVineyard.latitude.toFixed(4)}°</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Долгота</p>
+                      <p className="font-semibold">{selectedVineyard.longitude.toFixed(4)}°</p>
+                    </div>
+                  </div>
+                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+                    <p className="text-sm text-muted-foreground mb-1">Сумма активных температур (САТ)</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="font-bold text-2xl text-amber-600">{selectedVineyard.cat}</p>
+                      <span className="text-sm text-muted-foreground">°C</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
