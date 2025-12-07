@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "Get all vineyards",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "type"
+    },
+    {
+      "name": "Create new vineyard",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Тестовый виноградник",
+        "location": "Самара",
+        "bushCount": 10,
+        "type": "открытый грунт",
+        "x": 50,
+        "y": 50,
+        "latitude": 53.195,
+        "longitude": 50.1002,
+        "cat": 2400,
+        "technicalVarieties": 2,
+        "tableVarieties": 3
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "number",
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

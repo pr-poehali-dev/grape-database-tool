@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Vineyard {
   id: number;
@@ -23,12 +25,12 @@ interface Vineyard {
   tableVarieties: number;
 }
 
+const API_URL = 'https://functions.poehali.dev/acf3dfe9-a52f-4a00-a3fe-22c5d012c3dc';
+
 const Index = () => {
-  const [vineyards, setVineyards] = useState<Vineyard[]>([
-    { id: 1, name: 'Виноградник Иванова', location: 'Самара', bushCount: 25, type: 'открытый грунт', x: 45, y: 55, latitude: 53.195, longitude: 50.1002, cat: 2450, technicalVarieties: 3, tableVarieties: 5 },
-    { id: 2, name: 'Виноградник Петрова', location: 'Тольятти', bushCount: 40, type: 'теплица', x: 35, y: 48, latitude: 53.5303, longitude: 49.3461, cat: 2520, technicalVarieties: 2, tableVarieties: 8 },
-    { id: 3, name: 'Виноградник Сидорова', location: 'Сызрань', bushCount: 30, type: 'открытый грунт', x: 52, y: 62, latitude: 53.1585, longitude: 48.4681, cat: 2380, technicalVarieties: 4, tableVarieties: 6 }
-  ]);
+  const { toast } = useToast();
+  const [vineyards, setVineyards] = useState<Vineyard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedVineyard, setSelectedVineyard] = useState<Vineyard | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -44,21 +46,61 @@ const Index = () => {
     tableVarieties: 0
   });
 
-  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  useEffect(() => {
+    fetchVineyards();
+  }, []);
+
+  const fetchVineyards = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setVineyards(data);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить данные',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMapClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isAddingNew) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const vineyard: Vineyard = {
-      id: Date.now(),
+    const vineyardData = {
       ...newVineyard,
       x,
       y
     };
 
-    setVineyards([...vineyards, vineyard]);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vineyardData)
+      });
+      
+      if (response.ok) {
+        await fetchVineyards();
+        toast({
+          title: 'Успех',
+          description: 'Виноградарь добавлен'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось добавить виноградаря',
+        variant: 'destructive'
+      });
+    }
+
     setIsAddingNew(false);
     setNewVineyard({ name: '', location: '', bushCount: 0, type: 'открытый грунт', latitude: 0, longitude: 0, cat: 0, technicalVarieties: 0, tableVarieties: 0 });
   };
@@ -68,6 +110,17 @@ const Index = () => {
   const greenhouseCount = vineyards.filter(v => v.type === 'теплица').length;
   const totalTechnicalVarieties = vineyards.reduce((sum, v) => sum + v.technicalVarieties, 0);
   const totalTableVarieties = vineyards.reduce((sum, v) => sum + v.tableVarieties, 0);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Icon name="Loader2" size={48} className="animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background p-4 md:p-8">
@@ -155,30 +208,54 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="animate-scale-in" style={{ animationDelay: '0.5s' }}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Icon name="Mountain" className="text-green-600" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Открытый грунт</p>
-                  <p className="text-2xl font-bold">{openGroundCount}</p>
-                </div>
-              </div>
+            <CardHeader>
+              <CardTitle className="text-lg">Распределение сортов</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Технические', value: totalTechnicalVarieties, color: '#a855f7' },
+                      { name: 'Столовые', value: totalTableVarieties, color: '#ec4899' }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => `${entry.name}: ${entry.value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {[
+                      { name: 'Технические', value: totalTechnicalVarieties, color: '#a855f7' },
+                      { name: 'Столовые', value: totalTableVarieties, color: '#ec4899' }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
 
           <Card className="animate-scale-in" style={{ animationDelay: '0.6s' }}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Icon name="Home" className="text-blue-600" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Теплицы</p>
-                  <p className="text-2xl font-bold">{greenhouseCount}</p>
-                </div>
-              </div>
+            <CardHeader>
+              <CardTitle className="text-lg">Сорта по виноградарям</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={vineyards.slice(0, 5)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="technicalVarieties" fill="#a855f7" name="Технические" />
+                  <Bar dataKey="tableVarieties" fill="#ec4899" name="Столовые" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
