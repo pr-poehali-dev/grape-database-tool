@@ -19,13 +19,15 @@ interface Vineyard {
   latitude: number;
   longitude: number;
   cat: number;
+  technicalVarieties: number;
+  tableVarieties: number;
 }
 
 const Index = () => {
   const [vineyards, setVineyards] = useState<Vineyard[]>([
-    { id: 1, name: 'Виноградник Иванова', location: 'Самара', bushCount: 25, type: 'открытый грунт', x: 45, y: 55, latitude: 53.195, longitude: 50.1002, cat: 2450 },
-    { id: 2, name: 'Виноградник Петрова', location: 'Тольятти', bushCount: 40, type: 'теплица', x: 35, y: 48, latitude: 53.5303, longitude: 49.3461, cat: 2520 },
-    { id: 3, name: 'Виноградник Сидорова', location: 'Сызрань', bushCount: 30, type: 'открытый грунт', x: 52, y: 62, latitude: 53.1585, longitude: 48.4681, cat: 2380 }
+    { id: 1, name: 'Виноградник Иванова', location: 'Самара', bushCount: 25, type: 'открытый грунт', x: 45, y: 55, latitude: 53.195, longitude: 50.1002, cat: 2450, technicalVarieties: 3, tableVarieties: 5 },
+    { id: 2, name: 'Виноградник Петрова', location: 'Тольятти', bushCount: 40, type: 'теплица', x: 35, y: 48, latitude: 53.5303, longitude: 49.3461, cat: 2520, technicalVarieties: 2, tableVarieties: 8 },
+    { id: 3, name: 'Виноградник Сидорова', location: 'Сызрань', bushCount: 30, type: 'открытый грунт', x: 52, y: 62, latitude: 53.1585, longitude: 48.4681, cat: 2380, technicalVarieties: 4, tableVarieties: 6 }
   ]);
 
   const [selectedVineyard, setSelectedVineyard] = useState<Vineyard | null>(null);
@@ -37,7 +39,9 @@ const Index = () => {
     type: 'открытый грунт' as 'открытый грунт' | 'теплица',
     latitude: 0,
     longitude: 0,
-    cat: 0
+    cat: 0,
+    technicalVarieties: 0,
+    tableVarieties: 0
   });
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -56,12 +60,14 @@ const Index = () => {
 
     setVineyards([...vineyards, vineyard]);
     setIsAddingNew(false);
-    setNewVineyard({ name: '', location: '', bushCount: 0, type: 'открытый грунт', latitude: 0, longitude: 0, cat: 0 });
+    setNewVineyard({ name: '', location: '', bushCount: 0, type: 'открытый грунт', latitude: 0, longitude: 0, cat: 0, technicalVarieties: 0, tableVarieties: 0 });
   };
 
   const totalBushes = vineyards.reduce((sum, v) => sum + v.bushCount, 0);
   const openGroundCount = vineyards.filter(v => v.type === 'открытый грунт').length;
   const greenhouseCount = vineyards.filter(v => v.type === 'теплица').length;
+  const totalTechnicalVarieties = vineyards.reduce((sum, v) => sum + v.technicalVarieties, 0);
+  const totalTableVarieties = vineyards.reduce((sum, v) => sum + v.tableVarieties, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background p-4 md:p-8">
@@ -119,6 +125,50 @@ const Index = () => {
           </Card>
 
           <Card className="animate-scale-in" style={{ animationDelay: '0.3s' }}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Icon name="Grape" className="text-purple-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Технических сортов</p>
+                  <p className="text-2xl font-bold">{totalTechnicalVarieties}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-scale-in" style={{ animationDelay: '0.4s' }}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-pink-100 rounded-lg">
+                  <Icon name="Apple" className="text-pink-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Столовых сортов</p>
+                  <p className="text-2xl font-bold">{totalTableVarieties}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="animate-scale-in" style={{ animationDelay: '0.5s' }}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <Icon name="Mountain" className="text-green-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Открытый грунт</p>
+                  <p className="text-2xl font-bold">{openGroundCount}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="animate-scale-in" style={{ animationDelay: '0.6s' }}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-100 rounded-lg">
@@ -230,6 +280,28 @@ const Index = () => {
                           onChange={(e) => setNewVineyard({ ...newVineyard, cat: parseInt(e.target.value) || 0 })}
                           placeholder="2450"
                         />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="technicalVarieties">Технических сортов</Label>
+                          <Input
+                            id="technicalVarieties"
+                            type="number"
+                            value={newVineyard.technicalVarieties}
+                            onChange={(e) => setNewVineyard({ ...newVineyard, technicalVarieties: parseInt(e.target.value) || 0 })}
+                            placeholder="3"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="tableVarieties">Столовых сортов</Label>
+                          <Input
+                            id="tableVarieties"
+                            type="number"
+                            value={newVineyard.tableVarieties}
+                            onChange={(e) => setNewVineyard({ ...newVineyard, tableVarieties: parseInt(e.target.value) || 0 })}
+                            placeholder="5"
+                          />
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground">
                         Заполните форму, затем кликните на карту чтобы поставить метку
@@ -370,6 +442,16 @@ const Index = () => {
                     <div className="flex items-baseline gap-2">
                       <p className="font-bold text-2xl text-amber-600">{selectedVineyard.cat}</p>
                       <span className="text-sm text-muted-foreground">°C</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                      <p className="text-xs text-muted-foreground mb-1">Технических сортов</p>
+                      <p className="font-bold text-xl text-purple-600">{selectedVineyard.technicalVarieties}</p>
+                    </div>
+                    <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
+                      <p className="text-xs text-muted-foreground mb-1">Столовых сортов</p>
+                      <p className="font-bold text-xl text-pink-600">{selectedVineyard.tableVarieties}</p>
                     </div>
                   </div>
                 </CardContent>
